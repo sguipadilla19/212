@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+visualizador/fonte/check.mjs
+visualizador/fonte/casa.json

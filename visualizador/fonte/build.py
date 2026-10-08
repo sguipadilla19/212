@@ -1,0 +1,10 @@
+import json, re, os
+HERE = os.path.dirname(os.path.abspath(__file__))
+d = json.load(open(os.path.join(HERE, "casa.json"), encoding="utf-8"))
+tpl = open(os.path.join(HERE, "template.html"), encoding="utf-8").read()
+js = json.dumps(d, ensure_ascii=False).replace("</", "<\\/")
+out = tpl.replace("__DATA__", js)
+open(os.path.normpath(os.path.join(HERE, "..", "index.html")), "w", encoding="utf-8").write(out)
+m = re.search(r'<script type="module">(.*?)</script>', tpl, re.S)
+open(os.path.join(HERE, "check.mjs"), "w", encoding="utf-8").write(m.group(1))
+print("index.html KB:", len(out.encode()) // 1024)
