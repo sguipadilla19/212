@@ -354,7 +354,11 @@ function flushBuckets() {
 
 // --- pisos ---
 const floorRects = [];
-function floorLevelAt(x, z) { let best = GROUND; for (const f of floorRects) if (x >= f.x0 && x <= f.x1 && z >= f.z0 && z <= f.z1) best = Math.max(best, f.lvl); return best; }
+function floorLevelRaw(x, z) { let best = -1e9; for (const f of floorRects) if (x >= f.x0 && x <= f.x1 && z >= f.z0 && z <= f.z1) best = Math.max(best, f.lvl); return best; }
+function floorLevelAt(x, z) { // considera o entorno (0,35 m) para atravessar soleiras e vãos sem "cair" para o nível do jardim
+  let best = floorLevelRaw(x, z); if (best > -1e8) return best;
+  for (const [dx, dz] of [[.35, 0], [-.35, 0], [0, .35], [0, -.35]]) best = Math.max(best, floorLevelRaw(x + dx, z + dz));
+  return best > -1e8 ? best : GROUND; }
 function roomAt(x, z) { let best = null; for (const f of floorRects) if (x >= f.x0 && x <= f.x1 && z >= f.z0 && z <= f.z1) if (!best || f.lvl >= best.lvl) best = f; return best; }
 const roomAreas = {}; for (const f of DATA.floors) roomAreas[f.name] = (roomAreas[f.name] || 0) + (f.x1 - f.x0) * (f.z1 - f.z0);
 
@@ -395,7 +399,7 @@ function buildWall(w) {
   for (const o of ops) {
     const oa0 = Math.max(cur, o.a0), oa1 = Math.min(a1, o.a1); seg(cur, oa0, WALL_BOTTOM, WALL_TOP); baseboard(cur, oa0);
     const y0 = base + o.z0, y1 = base + o.z1, tc = (t0 + t1) / 2, th = t1 - t0;
-    seg(oa0, oa1, WALL_BOTTOM, y0); seg(oa0, oa1, y1, WALL_TOP);
+    seg(oa0, oa1, WALL_BOTTOM, y0, mat, { collide: !(o.type === 'door' || o.type === 'open') }); seg(oa0, oa1, y1, WALL_TOP);
     if (o.type === 'win' || o.type === 'glass') {
       const fr = 0.05, pt = 0.03;
       if (w.axis === 'x') box(oa0, oa1, tc - pt / 2, tc + pt / 2, y0, y1, M.glass, { collide: true, shadow: false }); else box(tc - pt / 2, tc + pt / 2, oa0, oa1, y0, y1, M.glass, { collide: true, shadow: false });
